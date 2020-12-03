@@ -11,9 +11,19 @@ class OsxfuseRequirement < Requirement
   satisfy(build_env: false) { self.class.binary_osxfuse_installed? }
 
   sig { returns(T::Boolean) }
-  def self.binary_osxfuse_installed?
+
+  def self.exist_include_osxfuse?
     File.exist?("/usr/local/include/osxfuse/fuse.h") &&
       !File.symlink?("/usr/local/include/osxfuse")
+  end
+
+  def self.exist_include_fuse?
+    File.exist?("/usr/local/include/fuse/fuse.h") &&
+      !File.symlink?("/usr/local/include/fuse")
+  end
+
+  def self.binary_osxfuse_installed?
+    exist_include_osxfuse? || exist_include_fuse?
   end
 
   env do
@@ -21,7 +31,8 @@ class OsxfuseRequirement < Requirement
 
     unless HOMEBREW_PREFIX.to_s == "/usr/local"
       ENV.append_path "HOMEBREW_LIBRARY_PATHS", "/usr/local/lib"
-      ENV.append_path "HOMEBREW_INCLUDE_PATHS", "/usr/local/include/osxfuse"
+      ENV.append_path "HOMEBREW_INCLUDE_PATHS",
+        "/usr/local/include/#{self.exist_include_osxfuse? ? "osxfuse" : "fuse"}"
     end
   end
 
